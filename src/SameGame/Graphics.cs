@@ -20,13 +20,24 @@ namespace SameGame
         private const int MaxSpriteCount = 1024;
 
         private int _vertCount = 0;
-        private Vector4[] _vertPositions;
+        private Vector3[] _vertPositions;
+        private Vector4[] _vertColors;
+        private Vector2[] _vertTexCoords;
+
+        private int _indexCount = 0;
+        private ushort[] _indices;
+
+        private const int BlockWidth = 32;
+        private const int BlockHeight = 32;
 
         public Graphics(Game game)
         {
             _game = game;
 
-            _vertPositions = new Vector4[MaxSpriteCount * 4];
+            _vertPositions = new Vector3[MaxSpriteCount * 4];
+            _vertColors = new Vector4[MaxSpriteCount * 4];
+            _vertTexCoords = new Vector2[MaxSpriteCount * 4];
+            _indices = new ushort[MaxSpriteCount * 6];
         }
 
         public void Dispose()
@@ -37,10 +48,10 @@ namespace SameGame
         {
             string vertShader =
 @"attribute vec3 vertPosition;
-attribute vec3 vertColor;
+attribute vec4 vertColor;
 attribute vec2 vertTexCoord;
 
-varying vec3 fragColor;
+varying vec4 fragColor;
 varying vec2 fragTexCoord;
 
 uniform mat4 vertTransform; 
@@ -55,14 +66,14 @@ void main()
             string fragShader =
 @"precision mediump float;
 
-varying vec3 fragColor;
+varying vec4 fragColor;
 varying vec2 fragTexCoord;
 
 uniform sampler2D fragTexture;
 
 void main()
 {
-    gl_FragColor = texture2D(fragTexture, fragTexCoord);
+    gl_FragColor = texture2D(fragTexture, fragTexCoord) * fragColor;
 }";
 
             uint vertexShader = GLUtils.CompileShader(vertShader, GL_VERTEX_SHADER);
@@ -109,6 +120,22 @@ void main()
         public void BeginDraw()
         {
             glClear(GL_COLOR_BUFFER_BIT);
+
+            DrawSprite(
+                new Vector2(BlockWidth / 2.0f, BlockHeight / 2.0f),
+                BlockWidth,
+                BlockHeight,
+                BlockWidth,
+                BlockHeight,
+                new Vector4(1.0f, 0, 0, 1.0f));
+
+            DrawSprite(
+                new Vector2((BlockWidth / 2.0f) + BlockWidth, BlockHeight / 2.0f),
+                BlockWidth,
+                BlockHeight,
+                BlockWidth,
+                BlockHeight,
+                new Vector4(0, 1.0f, 0, 1.0f));
         }
 
         public void EndDraw()
@@ -140,56 +167,26 @@ void main()
                 -1.0f, 1.0f, 0.0f, 1.0f,
             };
 
-            float[] vertPositions = new float[]
-            {
-                0.0f, 0.0f, 0.0f,
-                _blockImageWidth, 0.0f, 0.0f,
-                _blockImageWidth, _blockImageHeight, 0.0f,
-                0.0f, _blockImageHeight, 0.0f,
-            };
-
-            float[] vertColors = new float[]
-            {
-                1.0f, 1.0f, 1.0f,
-                1.0f, 1.0f, 1.0f,
-                1.0f, 1.0f, 1.0f,
-                1.0f, 1.0f, 1.0f,
-            };
-
-            float[] vertTexCoords = new float[]
-            {
-                0.0f, 0.0f,
-                1.0f, 0.0f,
-                1.0f, 1.0f,
-                0.0f, 1.0f,
-            };
-
-            ushort[] vertIndices = new ushort[]
-            {
-                0, 1, 3,
-                1, 2, 3,
-            };
-
             glViewport(0, 0, _game.WindowWidth, _game.WindowHeight);
             glClear(GL_COLOR_BUFFER_BIT);
 
             glUseProgram(_program);
 
-            fixed (void* vertPositionsPtr = vertPositions)
+            fixed (void* vertPositionsPtr = _vertPositions)
             {
                 glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, vertPositionsPtr);
             }
 
             glEnableVertexAttribArray(0);
 
-            fixed (void* vertColorsPtr = vertColors)
+            fixed (void* vertColorsPtr = _vertColors)
             {
-                glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, vertColorsPtr);
+                glVertexAttribPointer(1, 4, GL_FLOAT, false, 0, vertColorsPtr);
             }
 
             glEnableVertexAttribArray(1);
 
-            fixed (void* vertTexCoordsPtr = vertTexCoords)
+            fixed (void* vertTexCoordsPtr = _vertTexCoords)
             {
                 glVertexAttribPointer(2, 2, GL_FLOAT, false, 0, vertTexCoordsPtr);
             }
@@ -206,20 +203,41 @@ void main()
 
             glUniform1i(_fragTextureLocation, 0);
 
-            fixed (void* vertIndicesPtr = vertIndices)
+            fixed (void* indicesPtr = _indices)
             {
-                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, vertIndicesPtr);
+                glDrawElements(GL_TRIANGLES, _indexCount, GL_UNSIGNED_SHORT, indicesPtr);
             }
         }
 
-        public void DrawSprite(Vector2 pos, int width, int height)
+        public void DrawSprite(Vector2 pos, int srcX, int srcY, int srcWidth, int srcHeight, Vector4 color)
         {
-            float halfWidth = width / 2.0f;
-            float halfHeight = height / 2.0f;
+            float halfWidth = srcWidth / 2.0f;
+            float halfHeight = srcHeight / 2.0f;
 
-            _vertPositions[_vertCount] = new Vector4(pos.X - halfWidth, pos.Y - halfHeight, 0.0f, 1.0f);
+            _vertPositions[_vertCount] = new Vector3(pos.X - halfWidth, pos.Y - halfHeight, 0.0f);
+            _vertPositions[_vertCount + 1] = new Vector3(pos.X + halfWidth, pos.Y - halfHeight, 0.0f);
+            _vertPositions[_vertCount + 2] = new Vector3(pos.X + halfWidth, pos.Y + halfHeight, 0.0f);
+            _vertPositions[_vertCount + 3] = new Vector3(pos.X - halfWidth, pos.Y + halfHeight, 0.0f);
+
+            _vertColors[_vertCount] = color;
+            _vertColors[_vertCount + 1] = color;
+            _vertColors[_vertCount + 2] = color;
+            _vertColors[_vertCount + 3] = color;
+
+            _vertTexCoords[_vertCount] = new Vector2(srcX / (float)_blockImageWidth, srcY / (float)_blockImageHeight);
+            _vertTexCoords[_vertCount + 1] = new Vector2((srcX + srcWidth) / (float)_blockImageWidth, srcY / (float)_blockImageHeight);
+            _vertTexCoords[_vertCount + 2] = new Vector2((srcX + srcWidth) / (float)_blockImageWidth, (srcY + srcHeight) / (float)_blockImageHeight);
+            _vertTexCoords[_vertCount + 3] = new Vector2(srcX / (float)_blockImageWidth, (srcY + srcHeight) / (float)_blockImageHeight);
+
+            _indices[_indexCount] = (ushort)_vertCount;
+            _indices[_indexCount + 1] = (ushort)(_vertCount + 1);
+            _indices[_indexCount + 2] = (ushort)(_vertCount + 3);
+            _indices[_indexCount + 3] = (ushort)(_vertCount + 1);
+            _indices[_indexCount + 4] = (ushort)(_vertCount + 2);
+            _indices[_indexCount + 5] = (ushort)(_vertCount + 3);
 
             _vertCount += 4;
+            _indexCount += 6;
         }
     }
 }
