@@ -8,7 +8,7 @@ namespace SameGame
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
             using var game = new Game();
             game.Run();

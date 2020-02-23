@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Numerics;
 using ImageDotNet;
 using static GLESDotNet.GLES2;
 
@@ -16,9 +17,16 @@ namespace SameGame
         private int _blockImageWidth;
         private int _blockImageHeight;
 
+        private const int MaxSpriteCount = 1024;
+
+        private int _vertCount = 0;
+        private Vector4[] _vertPositions;
+
         public Graphics(Game game)
         {
             _game = game;
+
+            _vertPositions = new Vector4[MaxSpriteCount * 4];
         }
 
         public void Dispose()
@@ -82,10 +90,10 @@ void main()
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, _texture);
 
-            var image = Image.LoadTga(@"assets\Block.tga").To<Rgba32>();
+            Image<Rgba32> image = Image.LoadPng(@"assets\Block.png").To<Rgba32>();
             _blockImageWidth = image.Width;
             _blockImageHeight = image.Height;
-            using (var data = image.GetDataPointer())
+            using (ImageDataPointer data = image.GetDataPointer())
             {
                 glTexImage2D(GL_TEXTURE_2D, 0, (int)GL_RGBA, image.Width, image.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (void*)data.Pointer);
             }
@@ -104,6 +112,15 @@ void main()
         }
 
         public void EndDraw()
+        {
+            Flush();
+        }
+
+        public void Shutdown()
+        {
+        }
+
+        private void Flush()
         {
             int[] viewport = new int[4];
 
@@ -127,9 +144,6 @@ void main()
             {
                 0.0f, 0.0f, 0.0f,
                 _blockImageWidth, 0.0f, 0.0f,
-                0.0f, _blockImageHeight, 0.0f,
-
-                _blockImageWidth, 0.0f, 0.0f,
                 _blockImageWidth, _blockImageHeight, 0.0f,
                 0.0f, _blockImageHeight, 0.0f,
             };
@@ -139,21 +153,21 @@ void main()
                 1.0f, 1.0f, 1.0f,
                 1.0f, 1.0f, 1.0f,
                 1.0f, 1.0f, 1.0f,
-
                 1.0f, 1.0f, 1.0f,
-                1.0f, 1.0f, 1.0f,
-                1.0f, 1.0f, 1.0f
             };
 
             float[] vertTexCoords = new float[]
             {
                 0.0f, 0.0f,
                 1.0f, 0.0f,
-                0.0f, 1.0f,
-
-                1.0f, 0.0f,
                 1.0f, 1.0f,
-                0.0f, 1.0f
+                0.0f, 1.0f,
+            };
+
+            ushort[] vertIndices = new ushort[]
+            {
+                0, 1, 3,
+                1, 2, 3,
             };
 
             glViewport(0, 0, _game.WindowWidth, _game.WindowHeight);
@@ -192,11 +206,20 @@ void main()
 
             glUniform1i(_fragTextureLocation, 0);
 
-            glDrawArrays(GL_TRIANGLES, 0, 6);
+            fixed (void* vertIndicesPtr = vertIndices)
+            {
+                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, vertIndicesPtr);
+            }
         }
 
-        public void Shutdown()
+        public void DrawSprite(Vector2 pos, int width, int height)
         {
+            float halfWidth = width / 2.0f;
+            float halfHeight = height / 2.0f;
+
+            _vertPositions[_vertCount] = new Vector4(pos.X - halfWidth, pos.Y - halfHeight, 0.0f, 1.0f);
+
+            _vertCount += 4;
         }
     }
 }
