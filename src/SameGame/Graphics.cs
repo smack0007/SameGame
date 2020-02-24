@@ -12,10 +12,6 @@ namespace SameGame
         private uint _program;
         private int _vertTransformLocation;
         private int _fragTextureLocation;
-        private uint _texture;
-
-        private int _blockImageWidth;
-        private int _blockImageHeight;
 
         private const int MaxSpriteCount = 1024;
 
@@ -27,8 +23,7 @@ namespace SameGame
         private int _indexCount = 0;
         private ushort[] _indices;
 
-        private const int BlockWidth = 32;
-        private const int BlockHeight = 32;
+        private Texture _texture = Texture.None;
 
         public Graphics(Game game)
         {
@@ -42,6 +37,26 @@ namespace SameGame
 
         public void Dispose()
         {
+        }
+
+        public Texture LoadTexture(string fileName)
+        {
+            uint handle;
+            glGenTextures(1, &handle);
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, handle);
+
+            Image<Rgba32> image = Image.LoadPng(fileName).To<Rgba32>();
+            using (ImageDataPointer data = image.GetDataPointer())
+            {
+                glTexImage2D(GL_TEXTURE_2D, 0, (int)GL_RGBA, image.Width, image.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (void*)data.Pointer);
+            }
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (int)GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (int)GL_LINEAR);
+
+            return new Texture(handle, image.Width, image.Height);
         }
 
         public void Initialize()
@@ -94,24 +109,6 @@ void main()
             _vertTransformLocation = glGetUniformLocation(_program, "vertTransform");
             _fragTextureLocation = glGetUniformLocation(_program, "fragTexture");
 
-            uint texture;
-            glGenTextures(1, &texture);
-            _texture = texture;
-
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, _texture);
-
-            Image<Rgba32> image = Image.LoadPng(@"assets\Block.png").To<Rgba32>();
-            _blockImageWidth = image.Width;
-            _blockImageHeight = image.Height;
-            using (ImageDataPointer data = image.GetDataPointer())
-            {
-                glTexImage2D(GL_TEXTURE_2D, 0, (int)GL_RGBA, image.Width, image.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (void*)data.Pointer);
-            }
-
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (int)GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (int)GL_LINEAR);
-
             glEnable(GL_BLEND);
             glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
             glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
@@ -120,22 +117,6 @@ void main()
         public void BeginDraw()
         {
             glClear(GL_COLOR_BUFFER_BIT);
-
-            DrawSprite(
-                new Vector2(BlockWidth / 2.0f, BlockHeight / 2.0f),
-                BlockWidth,
-                BlockHeight,
-                BlockWidth,
-                BlockHeight,
-                new Vector4(1.0f, 0, 0, 1.0f));
-
-            DrawSprite(
-                new Vector2((BlockWidth / 2.0f) + BlockWidth, BlockHeight / 2.0f),
-                BlockWidth,
-                BlockHeight,
-                BlockWidth,
-                BlockHeight,
-                new Vector4(0, 1.0f, 0, 1.0f));
         }
 
         public void EndDraw()
@@ -149,6 +130,9 @@ void main()
 
         private void Flush()
         {
+            if (_vertCount <= 0)
+                return;
+
             int[] viewport = new int[4];
 
             fixed (int* viewportPtr = viewport)
@@ -193,13 +177,13 @@ void main()
 
             glEnableVertexAttribArray(2);
 
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, _texture);
-
             fixed (float* transformPtr = transform)
             {
                 glUniformMatrix4fv(_vertTransformLocation, 1, false, transformPtr);
             }
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, _texture.Handle);
 
             glUniform1i(_fragTextureLocation, 0);
 
@@ -207,10 +191,17 @@ void main()
             {
                 glDrawElements(GL_TRIANGLES, _indexCount, GL_UNSIGNED_SHORT, indicesPtr);
             }
+
+            _vertCount = 0;
         }
 
-        public void DrawSprite(Vector2 pos, int srcX, int srcY, int srcWidth, int srcHeight, Vector4 color)
+        public void DrawSprite(Texture texture, Vector2 pos, int srcX, int srcY, int srcWidth, int srcHeight, Vector4 color)
         {
+            if (texture.Handle != _texture.Handle)
+                Flush();
+
+            _texture = texture;
+
             float halfWidth = srcWidth / 2.0f;
             float halfHeight = srcHeight / 2.0f;
 
@@ -224,10 +215,10 @@ void main()
             _vertColors[_vertCount + 2] = color;
             _vertColors[_vertCount + 3] = color;
 
-            _vertTexCoords[_vertCount] = new Vector2(srcX / (float)_blockImageWidth, srcY / (float)_blockImageHeight);
-            _vertTexCoords[_vertCount + 1] = new Vector2((srcX + srcWidth) / (float)_blockImageWidth, srcY / (float)_blockImageHeight);
-            _vertTexCoords[_vertCount + 2] = new Vector2((srcX + srcWidth) / (float)_blockImageWidth, (srcY + srcHeight) / (float)_blockImageHeight);
-            _vertTexCoords[_vertCount + 3] = new Vector2(srcX / (float)_blockImageWidth, (srcY + srcHeight) / (float)_blockImageHeight);
+            _vertTexCoords[_vertCount] = new Vector2(srcX / (float)texture.Width, srcY / (float)texture.Height);
+            _vertTexCoords[_vertCount + 1] = new Vector2((srcX + srcWidth) / (float)texture.Width, srcY / (float)texture.Height);
+            _vertTexCoords[_vertCount + 2] = new Vector2((srcX + srcWidth) / (float)texture.Width, (srcY + srcHeight) / (float)texture.Height);
+            _vertTexCoords[_vertCount + 3] = new Vector2(srcX / (float)texture.Width, (srcY + srcHeight) / (float)texture.Height);
 
             _indices[_indexCount] = (ushort)_vertCount;
             _indices[_indexCount + 1] = (ushort)(_vertCount + 1);
