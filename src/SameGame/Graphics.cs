@@ -193,6 +193,7 @@ void main()
             }
 
             _vertCount = 0;
+            _indexCount = 0;
         }
 
         public void DrawSprite(Texture texture, Vector2 pos, int srcX, int srcY, int srcWidth, int srcHeight, Vector4 color)

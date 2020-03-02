@@ -1,21 +1,17 @@
 ﻿using System;
 using System.Diagnostics;
-using static GLFWDotNet.GLFW;
-using static GLESDotNet.EGL;
-using static GLESDotNet.GLES2;
 using System.IO;
 using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Numerics;
+using SameGame.Logic;
+using SameGame.Rendering;
+using static GLFWDotNet.GLFW;
+using static GLESDotNet.EGL;
 
 namespace SameGame
 {
     public class Game : IDisposable
     {
         private const float TimeBetweenFrames = 1000.0f / 60.0f;
-
-        private const int BlockWidth = 32;
-        private const int BlockHeight = 32;
 
         private IntPtr _window;
         private GLFWwindowsizefun _windowSizeCallback;
@@ -30,8 +26,6 @@ namespace SameGame
 
         private float _fpsElapsed;
 
-        private Texture _blockTexture;
-
         public int WindowWidth { get; private set; } = 1024;
 
         public int WindowHeight { get; private set; } = 768;
@@ -39,6 +33,10 @@ namespace SameGame
         public int FramesPerSecond { get; private set; }
 
         public Graphics Graphics { get; private set; }
+
+        public BoardRenderer BoardRenderer { get; private set; }
+
+        public Board Board { get; private set; }
 
         public Game()
         {
@@ -64,6 +62,10 @@ namespace SameGame
             GLUtils.CreateContext(_window, out _display, out _surface);
 
             Graphics = new Graphics(this);
+
+            BoardRenderer = new BoardRenderer(Graphics);
+
+            Board = new Board(new Random());
         }
 
         public void Dispose()
@@ -133,7 +135,7 @@ namespace SameGame
         {
             Graphics.Initialize();
 
-            _blockTexture = Graphics.LoadTexture(@"assets\Block.png");
+            BoardRenderer.Initialize();
         }
 
         private void Update(float elapsed)
@@ -144,29 +146,15 @@ namespace SameGame
         {
             Graphics.BeginDraw();
 
-            Graphics.DrawSprite(
-                _blockTexture,
-                new Vector2(BlockWidth / 2.0f, BlockHeight / 2.0f),
-                BlockWidth,
-                BlockHeight,
-                BlockWidth,
-                BlockHeight,
-                new Vector4(1.0f, 0, 0, 1.0f));
-
-            Graphics.DrawSprite(
-                _blockTexture,
-                new Vector2((BlockWidth / 2.0f) + BlockWidth, BlockHeight / 2.0f),
-                BlockWidth,
-                BlockHeight,
-                BlockWidth,
-                BlockHeight,
-                new Vector4(0, 1.0f, 0, 1.0f));
+            BoardRenderer.Render(Board);
 
             Graphics.EndDraw();
         }
 
         private void Shutdown()
         {
+            BoardRenderer.Shutdown();
+
             Graphics.Shutdown();
         }
     }
