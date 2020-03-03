@@ -6,36 +6,48 @@ namespace SameGame.Logic
     {
         public BlockColor Color { get; }
 
-        public BlockModifier Modifier { get; }
+        public BlockFlag Flags { get; private set; }
 
-        public Block(Random random)
+        public bool IsSelected => Flags.HasFlag(BlockFlag.Selected);
+
+        public Block(RNG random)
         {
             Color = (BlockColor)random.Next(0, 4);
 
-            Modifier = BlockModifier.None;
+            Flags = BlockFlag.None;
 
             var modifierDistribution = random.Next(1, 101);
             if (modifierDistribution % 2 == 0)
             {
-                Modifier = BlockModifier.X2;
+                Flags = BlockFlag.X2;
             }
             else if (modifierDistribution % 3 == 0)
             {
-                Modifier = BlockModifier.X3;
+                Flags = BlockFlag.X3;
             }
             else if (modifierDistribution % 5 == 0)
             {
-                Modifier = BlockModifier.X5;
+                Flags = BlockFlag.X5;
             }
 
             if (random.Next(1, 11) % 3 != 0)
-                Modifier = BlockModifier.None;
+                Flags = BlockFlag.None;
         }
 
-        public Block(BlockColor color, BlockModifier modifier)
+        public Block(BlockColor color, BlockFlag modifier)
         {
             Color = color;
-            Modifier = modifier;
+            Flags = modifier;
+        }
+
+        public void Select()
+        {
+            Flags |= BlockFlag.Selected;
+        }
+
+        public void Deselect()
+        {
+            Flags &= ~BlockFlag.Selected;
         }
     }
 }

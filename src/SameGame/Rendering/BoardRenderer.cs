@@ -5,8 +5,8 @@ namespace SameGame.Rendering
 {
     public class BoardRenderer
     {
-        private const int BlockWidth = 32;
-        private const int BlockHeight = 32;
+        public const int BlockWidth = 32;
+        public const int BlockHeight = 32;
 
         private readonly Graphics _graphics;
 
@@ -44,29 +44,45 @@ namespace SameGame.Rendering
             {
                 for (int x = 0; x < board.Width; x++)
                 {
+                    Block block = board[x, y];
+
                     var srcX = 0;
 
-                    if (board[x, y].Modifier == BlockModifier.X2)
+                    if (block.Flags.HasFlag(BlockFlag.X2))
                     {
                         srcX = BlockWidth;
                     }
-                    else if (board[x, y].Modifier == BlockModifier.X3)
+                    else if (block.Flags.HasFlag(BlockFlag.X3))
                     {
                         srcX = BlockWidth * 2;
                     }
-                    else if (board[x, y].Modifier == BlockModifier.X5)
+                    else if (block.Flags.HasFlag(BlockFlag.X5))
                     {
                         srcX = BlockWidth * 3;
                     }
 
+                    var position = new Vector2(x * BlockWidth, y * BlockHeight) + blockOrigin;
+
                     _graphics.DrawSprite(
                         _blockTexture,
-                        new Vector2(x * BlockWidth, y * BlockHeight) + blockOrigin,
+                        position,
                         srcX,
                         0,
                         BlockWidth,
                         BlockHeight,
-                        CalculateBlockColor(board[x, y].Color));
+                        CalculateBlockColor(block.Color));
+
+                    if (block.Flags.HasFlag(BlockFlag.Selected))
+                    {
+                        _graphics.DrawSprite(
+                            _blockTexture,
+                            position,
+                            BlockWidth * 4,
+                            0,
+                            BlockWidth,
+                            BlockHeight,
+                            new Vector4(0, 0, 0, 0.5f));
+                    }
                 }
             }
         }

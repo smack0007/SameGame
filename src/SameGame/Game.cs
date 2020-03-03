@@ -16,6 +16,8 @@ namespace SameGame
         private IntPtr _window;
         private GLFWwindowsizefun _windowSizeCallback;
         private GLFWkeyfun _keyboardCallback;
+        private GLFWcursorposfun _mouseMoveCallback;
+        private GLFWmousebuttonfun _mouseButtonCallback;
 
         private IntPtr _display;
         private IntPtr _surface;
@@ -25,6 +27,9 @@ namespace SameGame
         private float _elapsedSinceLastFrame;
 
         private float _fpsElapsed;
+
+        private int _mouseX;
+        private int _mouseY;
 
         public int WindowWidth { get; private set; } = 1024;
 
@@ -53,11 +58,17 @@ namespace SameGame
             if (_window == IntPtr.Zero)
                 throw new InvalidOperationException("Failed to create window.");
 
-            _windowSizeCallback = OnWindowSize;
+            _windowSizeCallback = (a, b, c) => OnWindowSize(a, b, c);
             glfwSetWindowSizeCallback(_window, _windowSizeCallback);
 
-            _keyboardCallback = OnKeyboard;
+            _keyboardCallback = (a, b, c, d, e) => OnKeyboard(a, b, c, d, e);
             glfwSetKeyCallback(_window, _keyboardCallback);
+
+            _mouseMoveCallback = (a, b, c) => OnMouseMove(a, b, c);
+            glfwSetCursorPosCallback(_window, _mouseMoveCallback);
+
+            _mouseButtonCallback = (a, b, c, d) => OnMouseButton(a, b, c, d);
+            glfwSetMouseButtonCallback(_window, _mouseButtonCallback);
 
             GLUtils.CreateContext(_window, out _display, out _surface);
 
@@ -65,7 +76,7 @@ namespace SameGame
 
             BoardRenderer = new BoardRenderer(Graphics);
 
-            Board = new Board(new Random());
+            Board = new Board(new RNG(100));
         }
 
         public void Dispose()
@@ -74,16 +85,44 @@ namespace SameGame
             glfwTerminate();
         }
 
-        protected virtual void OnWindowSize(IntPtr window, int width, int height)
+        private void OnWindowSize(IntPtr window, int width, int height)
         {
             WindowWidth = width;
             WindowHeight = height;
         }
 
-        protected virtual void OnKeyboard(IntPtr window, int key, int scancode, int action, int mods)
+        private void OnKeyboard(IntPtr window, int key, int scancode, int action, int mods)
         {
             if (key == GLFW_KEY_ESCAPE)
                 glfwSetWindowShouldClose(_window, 1);
+        }
+
+        private void OnMouseMove(IntPtr window, double xpos, double ypos)
+        {
+            _mouseX = (int)xpos;
+            _mouseY = (int)ypos;
+        }
+
+        private void OnMouseButton(IntPtr window, int button, int action, int mods)
+        {
+            int x = _mouseX / BoardRenderer.BlockWidth;
+            int y = _mouseY / BoardRenderer.BlockHeight;
+
+            switch (action)
+            {
+                case GLFW_PRESS:
+
+                    switch (button)
+                    {
+                        case GLFW_MOUSE_BUTTON_1:
+                            
+                            Board.LeftClickBlock(x, y);
+                            break;
+                    }
+
+                    break;
+            }
+            
         }
 
         public void Run()
