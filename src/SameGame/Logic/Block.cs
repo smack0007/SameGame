@@ -4,9 +4,11 @@ namespace SameGame.Logic
 {
     public class Block
     {
-        public BlockColor Color { get; }
+        public BlockColor Color { get; private set; }
 
         public BlockFlag Flags { get; private set; }
+
+        public bool IsHidden => Flags.HasFlag(BlockFlag.Hidden);
 
         public bool IsSelected => Flags.HasFlag(BlockFlag.Selected);
 
@@ -48,6 +50,17 @@ namespace SameGame.Logic
         public void Deselect()
         {
             Flags &= ~BlockFlag.Selected;
+        }
+
+        public void Hide()
+        {
+            Flags = BlockFlag.Hidden;
+        }
+
+        public void Copy(Block other)
+        {
+            Color = other.Color;
+            Flags = other.Flags;
         }
     }
 }

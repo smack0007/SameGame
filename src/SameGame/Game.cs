@@ -115,8 +115,7 @@ namespace SameGame
                     switch (button)
                     {
                         case GLFW_MOUSE_BUTTON_1:
-                            
-                            Board.LeftClickBlock(x, y);
+                            Board.LeftClick(x, y);
                             break;
                     }
 

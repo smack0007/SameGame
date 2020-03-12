@@ -6,13 +6,15 @@ namespace SameGame.Logic
     public enum BlockFlag
     {
         None = 0,
-        
-        X2 = 1,
 
-        X3 = 2,
+        Hidden = 1,
 
-        X5 = 4,
+        X2 = 2,
 
-        Selected = 8
+        X3 = 4,
+
+        X5 = 8,
+
+        Selected = 16
     }
 }

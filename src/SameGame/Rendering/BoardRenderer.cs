@@ -46,6 +46,9 @@ namespace SameGame.Rendering
                 {
                     Block block = board[x, y];
 
+                    if (block.IsHidden)
+                        continue;
+
                     var srcX = 0;
 
                     if (block.Flags.HasFlag(BlockFlag.X2))

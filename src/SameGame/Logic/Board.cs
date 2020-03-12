@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace SameGame.Logic
@@ -14,6 +15,8 @@ namespace SameGame.Logic
 
         public Block this[int x, int y] => _blocks[y * Width + x];
 
+        public int SelectedCount => _blocks.Count(x => x.IsSelected);
+
         public Board(RNG random)
         {
             _blocks = new Block[Width * Height];
@@ -26,12 +29,31 @@ namespace SameGame.Logic
             _searchedBlocks = new bool[_blocks.Length];
         }
 
-        public void LeftClickBlock(int x, int y)
+        public void LeftClick(int x, int y)
         {
-            DeselectAllBlocks();
-            Block source = _blocks[y * Width + x];
-            ClearSearchedBlocks();
-            SelectBlocks(x, y, source);
+            if (x < 0 || x >= Width ||
+                y < 0 || y >= Height)
+            {
+                return;
+            }
+
+            Block block = _blocks[y * Width + x];
+
+            if (block.IsSelected && SelectedCount > 1)
+            {
+                HideSelectedBlocks();
+                MoveBlocksDown();
+            }
+            else
+            {
+                DeselectAllBlocks();
+
+                if (!block.IsHidden)
+                {
+                    ClearSearchedBlocks();
+                    SelectBlocks(x, y, block);
+                }
+            }
         }
 
         private void DeselectAllBlocks()
@@ -54,7 +76,7 @@ namespace SameGame.Logic
             _searchedBlocks[y * Width + x] = true;
             Block current = _blocks[y * Width + x];
 
-            if (current.Color != source.Color)
+            if (current.IsHidden || current.Color != source.Color)
                 return;    
                 
             current.Select();
@@ -70,6 +92,43 @@ namespace SameGame.Logic
 
             if (y < Height - 1)
                 SelectBlocks(x, y + 1, source);
+        }
+
+        private void HideSelectedBlocks()
+        {
+            for (int i = 0; i < _blocks.Length; i++)
+                if (_blocks[i].IsSelected)
+                    _blocks[i].Hide();
+        }
+
+        private void MoveBlocksDown()
+        {
+            bool done = false;
+
+            while (!done)
+            {
+                done = true;
+
+                for (int y = Height - 2; y >= 0; y--)
+                {
+                    for (int x = 0; x < Width; x++)
+                    {
+                        var block = this[x, y];
+
+                        if (block.IsHidden)
+                            continue;
+                        
+                        var blockBelow = this[x, y + 1];
+
+                        if (blockBelow.IsHidden)
+                        {
+                            blockBelow.Copy(block);
+                            block.Hide();
+                            done = false;
+                        }
+                    }
+                }
+            }
         }
     }
 }
