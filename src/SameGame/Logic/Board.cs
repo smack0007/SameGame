@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 
 namespace SameGame.Logic
@@ -42,7 +43,7 @@ namespace SameGame.Logic
             if (block.IsSelected && SelectedCount > 1)
             {
                 HideSelectedBlocks();
-                MoveBlocksDown();
+                //MoveBlocksDown();
             }
             else
             {
@@ -125,6 +126,33 @@ namespace SameGame.Logic
                             blockBelow.Copy(block);
                             block.Hide();
                             done = false;
+                        }
+                    }
+                }
+            }
+        }
+
+        public void Update(float elapsed)
+        {
+            for (int y = Height - 2; y >= 0; y--)
+            {
+                for (int x = 0; x < Width; x++)
+                {
+                    var block = this[x, y];
+
+                    if (block.IsHidden)
+                        continue;
+
+                    var blockBelow = this[x, y + 1];
+
+                    if (blockBelow.IsHidden || blockBelow.IsFalling)
+                    {
+                        block.Fall(elapsed);
+
+                        if (block.BoardOffsetY >= 1)
+                        {
+                            blockBelow.Copy(block);
+                            block.Hide();
                         }
                     }
                 }

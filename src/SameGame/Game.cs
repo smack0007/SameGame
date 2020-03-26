@@ -178,6 +178,7 @@ namespace SameGame
 
         private void Update(float elapsed)
         {
+            Board.Update(elapsed);
         }
 
         private void Draw()

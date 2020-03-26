@@ -38,7 +38,7 @@ namespace SameGame.Rendering
 
         public void Render(Board board)
         {
-            var blockOrigin = new Vector2(BlockWidth / 2.0f, BlockHeight / 2.0f);
+            var origin = new Vector2(BlockWidth / 2.0f, BlockHeight / 2.0f);
 
             for (int y = 0; y < board.Height; y++)
             {
@@ -64,7 +64,8 @@ namespace SameGame.Rendering
                         srcX = BlockWidth * 3;
                     }
 
-                    var position = new Vector2(x * BlockWidth, y * BlockHeight) + blockOrigin;
+                    var offset = new Vector2(block.BoardOffsetX * BlockWidth, block.BoardOffsetY * BlockHeight);
+                    var position = new Vector2(x * BlockWidth, y * BlockHeight) + origin + offset;
 
                     _graphics.DrawSprite(
                         _blockTexture,

@@ -1,9 +1,14 @@
 ﻿using System;
+using System.Numerics;
 
 namespace SameGame.Logic
 {
     public class Block
     {
+        public const float FallRate = 0.05f;
+
+        private Vector2 _boardOffset;
+
         public BlockColor Color { get; private set; }
 
         public BlockFlag Flags { get; private set; }
@@ -11,6 +16,12 @@ namespace SameGame.Logic
         public bool IsHidden => Flags.HasFlag(BlockFlag.Hidden);
 
         public bool IsSelected => Flags.HasFlag(BlockFlag.Selected);
+
+        public bool IsFalling => _boardOffset.Y > 0;
+
+        public float BoardOffsetX => _boardOffset.X;
+
+        public float BoardOffsetY => _boardOffset.Y;
 
         public Block(RNG random)
         {
@@ -57,10 +68,16 @@ namespace SameGame.Logic
             Flags = BlockFlag.Hidden;
         }
 
+        public void Fall(float elapsed)
+        {
+            _boardOffset.Y += (FallRate * elapsed);
+        }
+
         public void Copy(Block other)
         {
             Color = other.Color;
             Flags = other.Flags;
+            _boardOffset = new Vector2();
         }
     }
 }
