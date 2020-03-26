@@ -25,6 +25,11 @@ namespace SameGame.Logic
 
         public Block(RNG random)
         {
+            Fill(random, 0.0f);
+        }
+
+        public void Fill(RNG random, float boardOffsetY)
+        {
             Color = (BlockColor)random.Next(0, 4);
 
             Flags = BlockFlag.None;
@@ -45,12 +50,8 @@ namespace SameGame.Logic
 
             if (random.Next(1, 11) % 3 != 0)
                 Flags = BlockFlag.None;
-        }
 
-        public Block(BlockColor color, BlockFlag modifier)
-        {
-            Color = color;
-            Flags = modifier;
+            _boardOffset = new Vector2(0, boardOffsetY);
         }
 
         public void Select()
@@ -68,9 +69,12 @@ namespace SameGame.Logic
             Flags = BlockFlag.Hidden;
         }
 
-        public void Fall(float elapsed)
+        public void Fall(float elapsed, float maxBoardOffsetY)
         {
             _boardOffset.Y += (FallRate * elapsed);
+
+            if (_boardOffset.Y > maxBoardOffsetY)
+                _boardOffset.Y = maxBoardOffsetY;
         }
 
         public void Copy(Block other)

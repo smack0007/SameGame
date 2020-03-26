@@ -1,18 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Text;
+﻿using System.Linq;
 
 namespace SameGame.Logic
 {
     public class Board
     {
+        public const float TimeBetweenFills = 5000.0f;
+
         public int Width { get; } = 32;
         public int Height { get; } = 20;
 
+        private readonly RNG _random;
+
         private Block[] _blocks;
         private bool[] _searchedBlocks;
+
+        private float _timeToNextFill = TimeBetweenFills;
 
         public Block this[int x, int y] => _blocks[y * Width + x];
 
@@ -20,11 +22,13 @@ namespace SameGame.Logic
 
         public Board(RNG random)
         {
+            _random = random;
+
             _blocks = new Block[Width * Height];
 
             for (int i = 0; i < _blocks.Length; i++)
             {
-                _blocks[i] = new Block(random);
+                _blocks[i] = new Block(_random);
             }
 
             _searchedBlocks = new bool[_blocks.Length];
@@ -43,7 +47,6 @@ namespace SameGame.Logic
             if (block.IsSelected && SelectedCount > 1)
             {
                 HideSelectedBlocks();
-                //MoveBlocksDown();
             }
             else
             {
@@ -102,36 +105,6 @@ namespace SameGame.Logic
                     _blocks[i].Hide();
         }
 
-        private void MoveBlocksDown()
-        {
-            bool done = false;
-
-            while (!done)
-            {
-                done = true;
-
-                for (int y = Height - 2; y >= 0; y--)
-                {
-                    for (int x = 0; x < Width; x++)
-                    {
-                        var block = this[x, y];
-
-                        if (block.IsHidden)
-                            continue;
-                        
-                        var blockBelow = this[x, y + 1];
-
-                        if (blockBelow.IsHidden)
-                        {
-                            blockBelow.Copy(block);
-                            block.Hide();
-                            done = false;
-                        }
-                    }
-                }
-            }
-        }
-
         public void Update(float elapsed)
         {
             for (int y = Height - 2; y >= 0; y--)
@@ -147,7 +120,7 @@ namespace SameGame.Logic
 
                     if (blockBelow.IsHidden || blockBelow.IsFalling)
                     {
-                        block.Fall(elapsed);
+                        block.Fall(elapsed, 1.0f);
 
                         if (block.BoardOffsetY >= 1)
                         {
@@ -155,7 +128,28 @@ namespace SameGame.Logic
                             block.Hide();
                         }
                     }
+                    else if (block.BoardOffsetY <= 0.0f)
+                    {
+                        block.Fall(elapsed, 0.0f);
+                    }
                 }
+            }
+
+            _timeToNextFill -= elapsed;
+
+            if (_timeToNextFill <= 0)
+            {
+                for (int x = 0; x < Width; x++)
+                {
+                    var block = this[x, 0];
+
+                    if (!block.IsHidden)
+                        continue;
+
+                    block.Fill(_random, -1.0f);
+                }
+
+                _timeToNextFill += TimeBetweenFills;
             }
         }
     }
