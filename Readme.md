@@ -4,3 +4,5 @@
 # SameGame
 
 An example game built with my libraries.
+
+![Gameplay Example](./assets/gameplay.gif)
