@@ -9,7 +9,7 @@
   <ItemGroup>
     <PackageReference Include="GLESDotNet" Version="20.2.0" />
     
-    <PackageReference Include="GLFWDotNet" Version="20.2.1" />
+    <PackageReference Include="GLFWDotNet" Version="20.9.0" />
 
     <PackageReference Include="ImageDotNet" Version="20.2.2" />
   </ItemGroup>
