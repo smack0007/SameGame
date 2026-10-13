@@ -1,17 +1,10 @@
-﻿using System;
-using System.IO;
-using System.Reflection;
-using static GLESDotNet.GLES2;
-using static GLFWDotNet.GLFW;
+﻿namespace SameGame;
 
-namespace SameGame
+class Program
 {
-    class Program
+    static void Main()
     {
-        static void Main()
-        {
-            using var game = new Game();
-            game.Run();
-        }
+        using var game = new Game();
+        game.Run();
     }
 }

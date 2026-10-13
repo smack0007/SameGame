@@ -1,20 +1,20 @@
-﻿namespace SameGame
+﻿using RaylibSharp;
+
+namespace SameGame;
+
+public readonly struct Texture
 {
-    public readonly struct Texture
+    public static readonly Texture None = new Texture(new Raylib.Texture() { id = 0 });
+
+    public Raylib.Texture Handle { get; }
+
+    public int Width => Handle.width;
+
+    public int Height => Handle.height;
+
+    public Texture(Raylib.Texture handle)
     {
-        public static readonly Texture None = new Texture(0, 0, 0);
-
-        public uint Handle { get; }
-
-        public int Width { get; }
-
-        public int Height { get; }
-
-        public Texture(uint handle, int width, int height)
-        {
-            Handle = handle;
-            Width = width;
-            Height = height;
-        }
+        Handle = handle;
     }
 }
+

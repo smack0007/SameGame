@@ -19,7 +19,7 @@ namespace SameGame.Rendering
 
         public void Initialize()
         {
-            _blockTexture = _graphics.LoadTexture(@"assets\Block.png");
+            _blockTexture = _graphics.LoadTexture(@"assets/Block.png");
         }
 
         public void Shutdown()
