@@ -2,9 +2,9 @@
 
 class Program
 {
-    static void Main()
-    {
-        using var game = new Game();
-        game.Run();
-    }
+  static void Main()
+  {
+    using var game = new Game();
+    game.Run();
+  }
 }

@@ -12,14 +12,14 @@ public class Mouse
 
   public void Update()
   {
-    var mousePosition = Raylib.GetMousePosition();
+  var mousePosition = Raylib.GetMousePosition();
 
-    Position = new Point()
-    {
-      X = (int)mousePosition.x,
-      Y = (int)mousePosition.y,
-    };
+  Position = new Point()
+  {
+    X = (int)mousePosition.x,
+    Y = (int)mousePosition.y,
+  };
 
-    IsLeftMouseButtonPressed = Raylib.IsMouseButtonPressed(Raylib.MOUSE_BUTTON_LEFT);
+  IsLeftMouseButtonPressed = Raylib.IsMouseButtonPressed(Raylib.MOUSE_BUTTON_LEFT);
   }
 }
