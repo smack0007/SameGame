@@ -1,93 +1,75 @@
 ﻿using System;
-using System.Diagnostics;
-using SameGame.Logic;
-using SameGame.Rendering;
+using SameGame.Gameplay;
 using RaylibSharp;
-using System.Runtime.InteropServices.Marshalling;
 
-namespace SameGame
+namespace SameGame;
+
+public class Game : IDisposable
 {
-    public class Game : IDisposable
+    public const int WindowWidth = 1024;
+    public const int WindowHeight = 768;
+
+    public Graphics _graphics;
+    public Mouse _mouse;
+    public Board _board;
+
+    public Game()
     {
-        public int WindowWidth { get; } = 1024;
+        Raylib.InitWindow(WindowWidth, WindowHeight, "SameGame");
+        Raylib.SetTargetFPS(60);
 
-        public int WindowHeight { get; } = 768;
+        _graphics = new Graphics(this);
+        _mouse = new Mouse();
+        _board = new Board(_graphics, new RNG(100));
+    }
 
-        public Graphics Graphics { get; private set; }
+    public void Dispose()
+    {
+        Raylib.CloseWindow();
+    }
 
-        public BoardRenderer BoardRenderer { get; private set; }
+    public void Run()
+    {
+        Initialize();
 
-        public Board Board { get; private set; }
-
-        public Game()
+        while (!Raylib.WindowShouldClose() && !Raylib.IsKeyDown(Raylib.KEY_ESCAPE))
         {
-            Raylib.InitWindow(WindowWidth, WindowHeight, "SameGame");
-            Raylib.SetTargetFPS(60);
-
-            Graphics = new Graphics(this);
-
-            BoardRenderer = new BoardRenderer(Graphics);
-
-            Board = new Board(new RNG(100));
+            Tick();
         }
 
-        public void Dispose()
-        {
-            Raylib.CloseWindow();
-        }
+        Shutdown();
+    }
 
-        public void Run()
-        {
-            Initialize();
+    private void Tick()
+    {
+        // raylib's elapsed time is in seconds so convert it to ms.
+        var elapsedTime = Raylib.GetFrameTime() * 1000.0f;
+        Update(elapsedTime);
+        Draw();
+    }
 
-            while (!Raylib.WindowShouldClose() && !Raylib.IsKeyDown(Raylib.KEY_ESCAPE))
-            {
-                Tick();
-            }
+    private void Initialize()
+    {
+        _graphics.Initialize();
+        _board.Initialize();
+    }
 
-            Shutdown();
-        }
+    private void Shutdown()
+    {
+        _board.Shutdown();
+        _graphics.Shutdown();
+    }
 
-        private void Tick()
-        {
-            // raylib's elapsed time is in seconds so convert it to ms.
-            var elapsedTime = Raylib.GetFrameTime() * 1000.0f;
-            Update(elapsedTime);
-            Draw();
-        }
+    private void Update(float elapsed)
+    {
+        _mouse.Update();
+        _board.Update(elapsed, _mouse);
+    }
 
-        private void Initialize()
-        {
-            Graphics.Initialize();
-            BoardRenderer.Initialize();
-        }
-
-        private void Update(float elapsed)
-        {
-            var mousePosition = Raylib.GetMousePosition();
-
-            int x = (int)mousePosition.x / BoardRenderer.BlockWidth;
-            int y = (int)mousePosition.y / BoardRenderer.BlockHeight;
-
-            if (Raylib.IsMouseButtonPressed(Raylib.MOUSE_BUTTON_LEFT))
-            {
-                Board.LeftClick(x, y);
-            }
-
-            Board.Update(elapsed);
-        }
-
-        private void Draw()
-        {
-            Graphics.BeginDraw();
-            BoardRenderer.Render(Board);
-            Graphics.EndDraw();
-        }
-
-        private void Shutdown()
-        {
-            BoardRenderer.Shutdown();
-            Graphics.Shutdown();
-        }
+    private void Draw()
+    {
+        _graphics.BeginDraw();
+        _board.Draw();
+        _graphics.EndDraw();
     }
 }
