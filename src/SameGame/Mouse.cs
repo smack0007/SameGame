@@ -16,8 +16,8 @@ public class Mouse
 
     Position = new Point()
     {
-      X = (int)mousePosition.x / Board.BlockWidth,
-      Y = (int)mousePosition.y / Board.BlockHeight,
+      X = (int)mousePosition.x,
+      Y = (int)mousePosition.y,
     };
 
     IsLeftMouseButtonPressed = Raylib.IsMouseButtonPressed(Raylib.MOUSE_BUTTON_LEFT);

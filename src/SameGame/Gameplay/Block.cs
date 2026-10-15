@@ -36,6 +36,12 @@ public class Block
 
     public bool IsSelected => Flags.HasFlag(BlockFlag.Selected);
 
+    public bool IsX2 => Flags.HasFlag(BlockFlag.X2);
+
+    public bool IsX3 => Flags.HasFlag(BlockFlag.X3);
+
+    public bool IsX5 => Flags.HasFlag(BlockFlag.X5);
+
     public bool IsFalling => _boardOffset.Y > 0;
 
     public float BoardOffsetX => _boardOffset.X;

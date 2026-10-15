@@ -1,6 +1,7 @@
 ﻿using System;
 using SameGame.Gameplay;
 using RaylibSharp;
+using System.Numerics;
 
 namespace SameGame;
 
@@ -8,6 +9,7 @@ public class Game : IDisposable
 {
     public const int WindowWidth = 1024;
     public const int WindowHeight = 768;
+    public const int BoardOffsetY = 64;
 
     public Graphics _graphics;
     public Mouse _mouse;
@@ -20,7 +22,7 @@ public class Game : IDisposable
 
         _graphics = new Graphics(this);
         _mouse = new Mouse();
-        _board = new Board(_graphics, new RNG(100));
+        _board = new Board(_graphics, new RNG(100), new Point(0, BoardOffsetY));
     }
 
     public void Dispose()
@@ -69,7 +71,11 @@ public class Game : IDisposable
     private void Draw()
     {
         _graphics.BeginDraw();
+
         _board.Draw();
+
+        _graphics.DrawText(_board.Score.ToString(), Vector2.Zero, 32);
+
         _graphics.EndDraw();
     }
 }

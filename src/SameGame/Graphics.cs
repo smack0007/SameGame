@@ -63,4 +63,9 @@ public class Graphics : IDisposable
             }
         );
     }
+
+    public void DrawText(string text, Vector2 pos, int fontSize)
+    {
+        Raylib.DrawText(text, (int)pos.X, (int)pos.Y, fontSize, Raylib.WHITE);
+    }
 }
